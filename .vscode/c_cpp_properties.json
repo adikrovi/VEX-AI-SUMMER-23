@@ -4,7 +4,8 @@
       "name": "PROS Project",
       "includePath": [
         "${workspaceFolder}/**",
-        "/Users/adityakrovi/Documents/VEX/Github_Clones/VEX-AI-SUMMER-23/include"
+        "/Users/adityakrovi/Documents/VEX/Github_Clones/VEX-AI-SUMMER-23/include",
+        "/Users/adityakrovi/Documents/VEX/Github_Clones/VEXAISUMMER23/include"
       ],
       "defines": [
         "_DEBUG",
@@ -15,13 +16,13 @@
       "cStandard": "c17",
       "cppStandard": "c++17",
       "intelliSenseMode": "gcc-arm",
-      "compileCommands": "/Users/adityakrovi/Documents/VEX/Github_Clones/VEX-AI-SUMMER-23/compile_commands.json",
+      "compileCommands": "/Users/adityakrovi/Documents/VEX/Github_Clones/VEXAISUMMER23/compile_commands.json",
       "macFrameworkPath": [
         "/System/Library/Frameworks"
       ],
       "browse": {
         "path": [
-          "/Users/adityakrovi/Documents/VEX/Github_Clones/VEX-AI-SUMMER-23"
+          "/Users/adityakrovi/Documents/VEX/Github_Clones/VEXAISUMMER23"
         ],
         "limitSymbolsToIncludedHeaders": true,
         "databaseFilename": ""
