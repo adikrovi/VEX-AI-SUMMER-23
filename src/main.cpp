@@ -1,4 +1,6 @@
 #include "main.h"
+#include "pros/adi.hpp"
+#include "pros/motors.h"
 
 
 /////
@@ -11,11 +13,11 @@
 Drive chassis (
   // Left Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
-  {-1, 2}
+  {1, 2}
 
   // Right Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
-  ,{-3, 4}
+  ,{8, 9}
 
   // IMU Port
   ,6
@@ -50,6 +52,15 @@ Drive chassis (
   // ,1
 );
 
+pros::Motor left1(11, false);
+pros::Motor left2(12, false);
+pros::Motor right1(18, false);
+pros::Motor right2(19, false);
+pros::Motor intake(20, false);
+pros::ADIDigitalIn fInput('F');
+pros::ADIDigitalIn hInput('H');
+pros::ADIDigitalOut eOutput('E');
+pros::ADIDigitalOut gOutput('G');
 
 
 /**
@@ -155,21 +166,39 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-  // This is preference to what you like to drive on.
-  chassis.set_drive_brake(MOTOR_BRAKE_COAST);
-
+  int i = 0;
+  int fVal = 0;
+  int hVal = 0;
+  int mult = 128;
   while (true) {
 
-    //chassis.tank(); // Tank control
-    chassis.arcade_standard(ez::SPLIT); // Standard split arcade
-    // chassis.arcade_standard(ez::SINGLE); // Standard single arcade
-    // chassis.arcade_flipped(ez::SPLIT); // Flipped split arcade
-    // chassis.arcade_flipped(ez::SINGLE); // Flipped single arcade
+    if (i < 8) {
+      int fIn = fInput.get_value();
+      int hIn = hInput.get_value();
 
-    // . . .
-    // Put more user control code here!
-    // . . .
+      switch (i) {
+        case 0:
+          fVal += fIn * -1 * mult;
+          hVal += hIn * -1 * mult;
+        default:
+          fVal += fIn * mult;
+          hVal += hIn * mult;
+      }
 
-    pros::delay(ez::util::DELAY_TIME); // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
+      mult /= 2;
+      i++;
+    } else {
+      left1.move(fVal);
+      left2.move(fVal);
+      right1.move(hVal);
+      right2.move(hVal);
+
+      i = 0;
+      fVal = 0;
+      hVal = 0;
+      mult = 128;
+    }
+
+    pros::delay(100); // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
   }
 }
