@@ -1,6 +1,8 @@
 #include "main.h"
 #include "pros/adi.hpp"
 #include "pros/motors.h"
+#include "pros/rotation.hpp"
+#include <cmath>
 
 
 /////
@@ -61,12 +63,17 @@ pros::ADIDigitalIn fInput('F');
 pros::ADIDigitalIn hInput('H');
 pros::ADIDigitalOut eOutput('E');
 pros::ADIDigitalOut gOutput('G');
+pros::Rotation leftRot(8);
+pros::Rotation rightRot(9);
+pros::Rotation backRot(10);
 
 double currX;
 double currY;
 
 double prevX;
 double prevY;
+
+double pi = M_PI;
 
 
 /**
@@ -108,6 +115,10 @@ void initialize() {
   ez::as::initialize();
 }
 
+double toRadians(double degrees) {
+  return degrees * pi / 180;
+}
+
 void odometry() {
   double leftDist = 1.40625;
   double rightDist = 1.40625;
@@ -115,9 +126,9 @@ void odometry() {
 
   double wheelDiameter = 2.75;
 
-  double prevLeft;
-  double prevRight;
-  double prevBack;
+  double prevLeft = 0;
+  double prevRight = 0;
+  double prevBack = 0;
 
   double currLeft;
   double currRight;
@@ -128,14 +139,52 @@ void odometry() {
   double deltaBack;
 
   double currAngle;
-  double prevAngle;
+  double prevAngle = 0;
   double deltaAngle;
+  double averageAngle;
 
   double offsetX;
   double offsetY;
 
+  double absoluteX;
+  double absoluteY;
+
   while (true) {
-    
+    currLeft = leftRot.get_position();
+    currRight = rightRot.get_position();
+    currBack = backRot.get_position();
+
+    deltaLeft = ((currLeft - prevLeft) / 360) * 2 * pi * (wheelDiameter / 2);
+    deltaRight = ((currRight - prevRight) / 360) * 2 * pi * (wheelDiameter / 2);
+    deltaBack = ((currBack - prevBack) / 360) * 2 * pi * (wheelDiameter / 2);
+
+    prevLeft = currLeft;
+    prevRight = currRight;
+    prevBack = currBack;
+
+    currAngle = prevAngle + ((deltaLeft - deltaRight) / (leftDist + rightDist));
+    deltaAngle = currAngle - prevAngle;
+
+    if (deltaAngle == 0) {
+      offsetX = deltaBack;
+      offsetY = deltaRight;
+    } else {
+      offsetX = 2 * sin(toRadians(currAngle / 2)) * ((deltaBack / deltaAngle) + backDist);
+      offsetY = 2 * sin(toRadians(currAngle / 2)) * ((deltaRight / deltaAngle) + rightDist);
+    }
+
+    averageAngle = prevAngle + (deltaAngle / 2);
+
+    prevAngle = currAngle;
+
+    absoluteX = offsetX / cos(toRadians(averageAngle));
+    absoluteY = offsetY / cos(toRadians(averageAngle));
+
+    prevX = currX;
+    prevY = currY;
+
+    currX += absoluteX;
+    currY += absoluteY;
   }
 }
 
@@ -201,39 +250,42 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-  int i = 0;
-  int fVal = 0;
-  int hVal = 0;
-  int mult = 128;
-  while (true) {
+  // int i = 0;
+  // int fVal = 0;
+  // int hVal = 0;
+  // int mult = 128;
+  // while (true) {
 
-    if (i < 8) {
-      int fIn = fInput.get_value();
-      int hIn = hInput.get_value();
+  //   if (i < 8) {
+  //     int fIn = fInput.get_value();
+  //     int hIn = hInput.get_value();
 
-      switch (i) {
-        case 0:
-          fVal += fIn * -1 * mult;
-          hVal += hIn * -1 * mult;
-        default:
-          fVal += fIn * mult;
-          hVal += hIn * mult;
-      }
+  //     switch (i) {
+  //       case 0:
+  //         fVal += fIn * -1 * mult;
+  //         hVal += hIn * -1 * mult;
+  //       default:
+  //         fVal += fIn * mult;
+  //         hVal += hIn * mult;
+  //     }
 
-      mult /= 2;
-      i++;
-    } else {
-      left1.move(fVal);
-      left2.move(fVal);
-      right1.move(hVal);
-      right2.move(hVal);
+  //     mult /= 2;
+  //     i++;
+  //   } else {
+  //     left1.move(fVal);
+  //     left2.move(fVal);
+  //     right1.move(hVal);
+  //     right2.move(hVal);
 
-      i = 0;
-      fVal = 0;
-      hVal = 0;
-      mult = 128;
-    }
+  //     i = 0;
+  //     fVal = 0;
+  //     hVal = 0;
+  //     mult = 128;
+  //   }
 
     pros::delay(100); // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
-  }
+  //}
+
+  
+
 }
