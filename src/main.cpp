@@ -24,11 +24,11 @@ Drive chassis (
 
   // Wheel Diameter (Remember, 4" wheels are actually 4.125!)
   //    (or tracking wheel diameter)
-  ,2.75
+  ,3.25
 
   // Cartridge RPM
   //   (or tick per rotation if using tracking wheels)
-  //,600
+  ,600
 
   // External Gear Ratio (MUST BE DECIMAL)
   //    (or gear ratio of tracking wheel)
@@ -40,11 +40,11 @@ Drive chassis (
   
   // Left Tracking Wheel Ports (negative port will reverse it!)
   // ,{1, 2} // 3 wire encoder
-  ,8 // Rotation sensor
+  //,8 // Rotation sensor
 
   // Right Tracking Wheel Ports (negative port will reverse it!)
   // ,{-3, -4} // 3 wire encoder
-  ,-9 // Rotation sensor
+  //,-9 // Rotation sensor
   
 
   // Uncomment if tracking wheels are plugged into a 3 wire expander
@@ -61,6 +61,12 @@ pros::ADIDigitalIn fInput('F');
 pros::ADIDigitalIn hInput('H');
 pros::ADIDigitalOut eOutput('E');
 pros::ADIDigitalOut gOutput('G');
+
+double currX;
+double currY;
+
+double prevX;
+double prevY;
 
 
 /**
@@ -102,7 +108,36 @@ void initialize() {
   ez::as::initialize();
 }
 
+void odometry() {
+  double leftDist = 1.40625;
+  double rightDist = 1.40625;
+  double backDist = 4.5;
 
+  double wheelDiameter = 2.75;
+
+  double prevLeft;
+  double prevRight;
+  double prevBack;
+
+  double currLeft;
+  double currRight;
+  double currBack;
+
+  double deltaLeft;
+  double deltaRight;
+  double deltaBack;
+
+  double currAngle;
+  double prevAngle;
+  double deltaAngle;
+
+  double offsetX;
+  double offsetY;
+
+  while (true) {
+    
+  }
+}
 
 /**
  * Runs while the robot is in the disabled state of Field Management System or
