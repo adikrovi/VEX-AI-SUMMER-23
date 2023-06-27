@@ -184,8 +184,8 @@ void odometry() {
       offsetX = deltaBack;
       offsetY = deltaRight;
     } else {
-      offsetX = 2 * sin(toRadians(currAngle / 2)) * ((deltaBack / deltaAngle) + backDist);
-      offsetY = 2 * sin(toRadians(currAngle / 2)) * ((deltaRight / deltaAngle) + rightDist);
+      offsetX = 2 * sin(toRadians(currAngle / 2)) * ((deltaBack / deltaAngle) + backDist); // this 
+      offsetY = 2 * sin(toRadians(currAngle / 2)) * ((deltaRight / deltaAngle) + rightDist); // and this
     }
 
     pros::screen::print(TEXT_MEDIUM, 5, "Offset: X: %d, Y: %d", (int) offsetX, (int) offsetY);
