@@ -1,5 +1,8 @@
 #include "main.h"
+#include "EZ-Template/util.hpp"
 #include "pros/adi.hpp"
+#include "pros/misc.h"
+#include "pros/misc.hpp"
 #include "pros/motors.h"
 #include "pros/rotation.hpp"
 #include <cmath>
@@ -55,8 +58,8 @@ Drive chassis (
 );
 
 pros::Motor left1(11, false);
-pros::Motor left2(12, false);
-pros::Motor right1(18, false);
+pros::Motor left2(12, true);
+pros::Motor right1(18, true);
 pros::Motor right2(19, false);
 pros::Motor intake(20, false);
 pros::ADIDigitalIn fInput('F');
@@ -66,12 +69,13 @@ pros::ADIDigitalOut gOutput('G');
 pros::Rotation leftRot(8);
 pros::Rotation rightRot(9);
 pros::Rotation backRot(10);
+pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
-double currX;
-double currY;
+double currX = 0;
+double currY = 0;
 
-double prevX;
-double prevY;
+double prevX = 0;
+double prevY = 0;
 
 double pi = M_PI;
 
@@ -150,9 +154,9 @@ void odometry() {
   double absoluteY;
 
   while (true) {
-    currLeft = leftRot.get_position();
-    currRight = rightRot.get_position();
-    currBack = backRot.get_position();
+    currLeft = leftRot.get_position() / 100.0;
+    currRight = rightRot.get_position() / 100.0;
+    currBack = backRot.get_position() / 100.0;
 
     deltaLeft = ((currLeft - prevLeft) / 360) * 2 * pi * (wheelDiameter / 2);
     deltaRight = ((currRight - prevRight) / 360) * 2 * pi * (wheelDiameter / 2);
@@ -177,14 +181,21 @@ void odometry() {
 
     prevAngle = currAngle;
 
-    absoluteX = offsetX / cos(toRadians(averageAngle));
-    absoluteY = offsetY / cos(toRadians(averageAngle));
+    if (abs(averageAngle) == 90) {
+      absoluteX = offsetY;
+      absoluteY = offsetX;
+    } else {
+      absoluteX = offsetX / cos(toRadians(averageAngle));
+      absoluteY = offsetY / cos(toRadians(averageAngle));
+    }
 
     prevX = currX;
     prevY = currY;
 
     currX += absoluteX;
     currY += absoluteY;
+
+    pros::delay(100);
   }
 }
 
@@ -283,9 +294,28 @@ void opcontrol() {
   //     mult = 128;
   //   }
 
-    pros::delay(100); // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
+    //pros::delay(100); // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
   //}
 
-  
+  leftRot.reset_position();
+  rightRot.reset_position();
+  backRot.reset_position();
+
+  pros::Task odom(odometry);
+
+  while (true) {
+    int leftPower = controller.get_analog(ANALOG_LEFT_Y) + controller.get_analog(ANALOG_RIGHT_X);
+    int rightPower = controller.get_analog(ANALOG_LEFT_Y) - controller.get_analog(ANALOG_RIGHT_X);
+
+    left1.move(leftPower);
+    left2.move(leftPower);
+    right1.move(rightPower);
+    right2.move(rightPower);
+
+    pros::screen::print(TEXT_MEDIUM, 2, "X: %d", currX);
+    pros::screen::print(TEXT_MEDIUM, 3, "Y: %d", currY);
+
+    pros::delay(100);
+  }
 
 }
