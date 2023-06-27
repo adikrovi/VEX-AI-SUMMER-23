@@ -126,10 +126,6 @@ double toRadians(double degrees) {
 }
 
 void odometry() {
-
-  pros::screen::erase();
-  pros::screen::print(TEXT_MEDIUM, 1, "X: %d", (int) currX);
-  pros::screen::print(TEXT_MEDIUM, 2, "Y: %d", (int) currY);
   double leftDist = 1.40625;
   double rightDist = 1.40625;
   double backDist = 4.5;
@@ -160,18 +156,22 @@ void odometry() {
   double absoluteY;
 
   while (true) {
+    pros::screen::erase();
+    pros::screen::print(TEXT_MEDIUM, 1, "X: %d", (int) currX);
+    pros::screen::print(TEXT_MEDIUM, 2, "Y: %d", (int) currY);
+
     currLeft = leftRot.get_position() / 100.0;
     currRight = -rightRot.get_position() / 100.0;
     currBack = backRot.get_position() / 100.0;
 
-    pros::screen::print(TEXT_MEDIUM, 3, "Orig: R: %f, L: %f, B: %f", (int) currRight, (int) currLeft, (int) currBack);
+    pros::screen::print(TEXT_MEDIUM, 3, "Orig: L: %d, R: %d, B: %d", (int) currLeft, (int) currRight, (int) currBack);
 
 
     deltaLeft = ((currLeft - prevLeft) / 360) * 2 * pi * (wheelDiameter / 2);
     deltaRight = ((currRight - prevRight) / 360) * 2 * pi * (wheelDiameter / 2);
     deltaBack = ((currBack - prevBack) / 360) * 2 * pi * (wheelDiameter / 2);
 
-    pros::screen::print(TEXT_MEDIUM, 4, "Delta: L: %f, R: %f, B: %f", (int) deltaLeft, (int) deltaRight, (int) deltaBack);
+    pros::screen::print(TEXT_MEDIUM, 4, "Delta: L: %d, R: %d, B: %d", (int) deltaLeft, (int) deltaRight, (int) deltaBack);
 
     prevLeft = currLeft;
     prevRight = currRight;
@@ -188,19 +188,16 @@ void odometry() {
       offsetY = 2 * sin(toRadians(currAngle / 2)) * ((deltaRight / deltaAngle) + rightDist);
     }
 
-    pros::screen::print(TEXT_MEDIUM, 5, "Offset: X: %f, Y: %f", (int) offsetX, (int) offsetY);
+    pros::screen::print(TEXT_MEDIUM, 5, "Offset: X: %d, Y: %d", (int) offsetX, (int) offsetY);
 
     averageAngle = prevAngle + (deltaAngle / 2);
 
     prevAngle = currAngle;
 
-    if (abs(averageAngle) == 90) {
-      absoluteX = offsetY;
-      absoluteY = offsetX;
-    } else {
-      absoluteX = offsetX / cos(toRadians(averageAngle));
-      absoluteY = offsetY / cos(toRadians(averageAngle));
-    }
+    
+    absoluteX = offsetX * cos(toRadians(averageAngle));
+    absoluteY = offsetY * cos(toRadians(averageAngle));
+    
 
     prevX = currX;
     prevY = currY;
