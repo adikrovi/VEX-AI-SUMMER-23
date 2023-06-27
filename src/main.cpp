@@ -5,7 +5,9 @@
 #include "pros/misc.hpp"
 #include "pros/motors.h"
 #include "pros/rotation.hpp"
+#include "pros/screen.hpp"
 #include <cmath>
+#include <iostream>
 
 
 /////
@@ -124,6 +126,7 @@ double toRadians(double degrees) {
 }
 
 void odometry() {
+  cout << "\nStart Round:";
   double leftDist = 1.40625;
   double rightDist = 1.40625;
   double backDist = 4.5;
@@ -155,12 +158,17 @@ void odometry() {
 
   while (true) {
     currLeft = leftRot.get_position() / 100.0;
-    currRight = rightRot.get_position() / 100.0;
+    currRight = -rightRot.get_position() / 100.0;
     currBack = backRot.get_position() / 100.0;
+
+    pros::screen::print(TEXT_MEDIUM, 3, "Orig: L: %d, R: %d, B: %d", currLeft, currRight, currBack);
+
 
     deltaLeft = ((currLeft - prevLeft) / 360) * 2 * pi * (wheelDiameter / 2);
     deltaRight = ((currRight - prevRight) / 360) * 2 * pi * (wheelDiameter / 2);
     deltaBack = ((currBack - prevBack) / 360) * 2 * pi * (wheelDiameter / 2);
+
+    pros::screen::print(TEXT_MEDIUM, 4, "Delta: L: %d, R: %d, B: %d", deltaLeft, deltaRight, deltaBack);
 
     prevLeft = currLeft;
     prevRight = currRight;
@@ -176,6 +184,8 @@ void odometry() {
       offsetX = 2 * sin(toRadians(currAngle / 2)) * ((deltaBack / deltaAngle) + backDist);
       offsetY = 2 * sin(toRadians(currAngle / 2)) * ((deltaRight / deltaAngle) + rightDist);
     }
+
+    pros::screen::print(TEXT_MEDIUM, 5, "Offset: X: %d, Y: %d", offsetX, offsetY);
 
     averageAngle = prevAngle + (deltaAngle / 2);
 
@@ -311,9 +321,9 @@ void opcontrol() {
     left2.move(leftPower);
     right1.move(rightPower);
     right2.move(rightPower);
-
-    pros::screen::print(TEXT_MEDIUM, 2, "X: %d", currX);
-    pros::screen::print(TEXT_MEDIUM, 3, "Y: %d", currY);
+    pros::screen::erase();
+    pros::screen::print(TEXT_MEDIUM, 1, "X: %d", currX);
+    pros::screen::print(TEXT_MEDIUM, 2, "Y: %d", currY);
 
     pros::delay(100);
   }

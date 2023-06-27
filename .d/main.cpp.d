@@ -81,7 +81,7 @@ bin/main.cpp.o: src/main.cpp include/main.h include/api.h \
  include/EZ-Template/auton_selector.hpp \
  include/EZ-Template/drive/drive.hpp include/EZ-Template/sdcard.hpp \
  include/autons.hpp include/pros/adi.hpp include/pros/misc.hpp \
- include/pros/rotation.hpp
+ include/pros/rotation.hpp include/pros/screen.hpp
 include/main.h:
 include/api.h:
 include/pros/adi.h:
@@ -247,3 +247,4 @@ include/autons.hpp:
 include/pros/adi.hpp:
 include/pros/misc.hpp:
 include/pros/rotation.hpp:
+include/pros/screen.hpp:
