@@ -79,7 +79,7 @@ double currY = 0;
 double prevX = 0;
 double prevY = 0;
 
-double pi = M_PI;
+double pi = 3.14159265358979323846;
 
 
 /**
@@ -126,24 +126,27 @@ double toRadians(double degrees) {
 }
 
 void odometry() {
+  // distance from middle
   double leftDist = 1.40625;
   double rightDist = 1.40625;
   double backDist = 4.5;
 
   double wheelDiameter = 2.75;
 
+// distance
   double prevLeft = 0;
   double prevRight = 0;
   double prevBack = 0;
-
+// current distance
   double currLeft;
   double currRight;
   double currBack;
-
+// change in distance
   double deltaLeft;
   double deltaRight;
   double deltaBack;
 
+//angle of circle
   double currAngle;
   double prevAngle = 0;
   double deltaAngle;
@@ -160,51 +163,57 @@ void odometry() {
     pros::screen::print(TEXT_MEDIUM, 1, "X: %d", (int) currX);
     pros::screen::print(TEXT_MEDIUM, 2, "Y: %d", (int) currY);
 
-    currLeft = leftRot.get_position() / 100.0;
-    currRight = -rightRot.get_position() / 100.0;
-    currBack = backRot.get_position() / 100.0;
+    currLeft = toRadians(leftRot.get_position() / 100.0);
+    currRight = toRadians(-rightRot.get_position() / 100.0);
+    currBack = toRadians(backRot.get_position() / 100.0);
 
     pros::screen::print(TEXT_MEDIUM, 3, "Orig: L: %d, R: %d, B: %d", (int) currLeft, (int) currRight, (int) currBack);
 
-
-    deltaLeft = ((currLeft - prevLeft) / 360) * 2 * pi * (wheelDiameter / 2);
-    deltaRight = ((currRight - prevRight) / 360) * 2 * pi * (wheelDiameter / 2);
-    deltaBack = ((currBack - prevBack) / 360) * 2 * pi * (wheelDiameter / 2);
+    // figuring out the distance the wheel has moved
+    deltaLeft = ((currLeft - prevLeft)) * (wheelDiameter / 2);
+    deltaRight = ((currRight - prevRight)) * (wheelDiameter / 2);
+    deltaBack = ((currBack - prevBack)) * (wheelDiameter / 2);
 
     pros::screen::print(TEXT_MEDIUM, 4, "Delta: L: %d, R: %d, B: %d", (int) deltaLeft, (int) deltaRight, (int) deltaBack);
-
+   
+    // making current distances
     prevLeft = currLeft;
     prevRight = currRight;
     prevBack = currBack;
 
-    currAngle = prevAngle + ((deltaLeft - deltaRight) / (leftDist + rightDist));
-    deltaAngle = currAngle - prevAngle;
-
-    if (deltaAngle == 0) {
+    //Figuring out angle
+    currAngle = (prevAngle + ((deltaLeft - deltaRight) / (leftDist + rightDist))); // error here as well
+    deltaAngle = (currAngle - prevAngle);
+    pros::screen::print(TEXT_MEDIUM, 5, "angles: prev: %d, Curr: %d, Delta: %d", (int) prevAngle, (int) currAngle, (int) deltaAngle);
+    if (currAngle == prevAngle) {
       offsetX = deltaBack;
-      offsetY = deltaRight;
-    } else {
-      offsetX = 2 * sin(toRadians(currAngle / 2)) * ((deltaBack / deltaAngle) + backDist); // this 
-      offsetY = 2 * sin(toRadians(currAngle / 2)) * ((deltaRight / deltaAngle) + rightDist); // and this
+      offsetY = deltaRight;}
+      else {
+      offsetX = (2 * double (sin(currAngle / 2))) * ((deltaBack / deltaAngle) + backDist); // this 
+      offsetY = (2 * double (sin(currAngle / 2))) * ((deltaRight / deltaAngle) + rightDist); // and this
     }
 
-    pros::screen::print(TEXT_MEDIUM, 5, "Offset: X: %d, Y: %d", (int) offsetX, (int) offsetY);
+    pros::screen::print(TEXT_MEDIUM, 6, "Offset: X: %d, Y: %d", int (offsetX), int (offsetY));
 
     averageAngle = prevAngle + (deltaAngle / 2);
 
     prevAngle = currAngle;
-
+    pros::screen::print(TEXT_MEDIUM, 7, "current angktghjtrt: X: %d", (int) currAngle);
     
-    absoluteX = offsetX * cos(toRadians(averageAngle));
-    absoluteY = offsetY * cos(toRadians(averageAngle));
+    absoluteX = offsetX * double (cos(averageAngle));
+    absoluteY = offsetY * double (cos(averageAngle));
     
-
+    
     prevX = currX;
     prevY = currY;
 
     currX += absoluteX;
     currY += absoluteY;
-    pros::delay(100);
+
+    double yourmom = sin(pi / 2);
+    pros::screen::print(TEXT_MEDIUM, 8, "sine: %d", (int) yourmom);
+
+    pros::delay(10);
   }
 }
 
@@ -321,7 +330,18 @@ void opcontrol() {
     left2.move(leftPower);
     right1.move(rightPower);
     right2.move(rightPower);
-
+    if (controller.get_digital(DIGITAL_R2)) {
+     
+      intake = -120;
+    }
+      else if (controller.get_digital(DIGITAL_R1)) {
+      intake = 120;
+    }
+    else {
+      intake = 0;
+      
+    }
+ 
     pros::delay(100);
   }
 
