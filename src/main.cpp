@@ -77,6 +77,7 @@ pros::Imu imu(7);
 
 double currX = 0;
 double currY = 0;
+double currAngle = 0;
 
 double prevX = 0;
 double prevY = 0;
@@ -149,7 +150,6 @@ void odometry() {
   double deltaBack;
 
 //angle of circle
-  double currAngle;
   double prevAngle = 0.0;
   double deltaAngle;
   double averageAngle;
@@ -162,21 +162,21 @@ void odometry() {
 
   while (true) {
     pros::screen::erase();
-    pros::screen::print(TEXT_MEDIUM, 1, "X: %d", (int) currX);
-    pros::screen::print(TEXT_MEDIUM, 2, "Y: %d", (int) currY);
+    pros::screen::print(TEXT_MEDIUM, 1, "X: %d Y: %d", (int) currX, (int) currY);
+    pros::screen::print(TEXT_MEDIUM, 2, "Ang: %d", currAngle);
 
     currLeft = toRadians(leftRot.get_position() / 100.0);
     currRight = toRadians(-rightRot.get_position() / 100.0);
     currBack = (toRadians(backRot.get_position() / 100.0));
 
-    pros::screen::print(TEXT_MEDIUM, 3, "Orig: L: %f, R: %f, B: %f", currLeft, currRight, currBack);
+    //pros::screen::print(TEXT_MEDIUM, 3, "Orig: L: %f, R: %f, B: %f", currLeft, currRight, currBack);
 
     // figuring out the distance the robot has moved (in)
     deltaLeft = ((currLeft - prevLeft)) * (wheelDiameter / 2.0);
     deltaRight = ((currRight - prevRight)) * (wheelDiameter / 2.0);
     deltaBack = ((currBack - prevBack)) * (wheelDiameter / 2.0);
 
-    pros::screen::print(TEXT_MEDIUM, 4, "Delta: L: %f, R: %f, B: %f", deltaLeft, deltaRight, deltaBack);
+    //pros::screen::print(TEXT_MEDIUM, 4, "Delta: L: %f, R: %f, B: %f", deltaLeft, deltaRight, deltaBack);
    
     // making current distances
     prevLeft = currLeft;
@@ -193,7 +193,7 @@ void odometry() {
     // }
     currAngle = toRadians(imu.get_heading());
     deltaAngle = (currAngle - prevAngle);
-    pros::screen::print(TEXT_MEDIUM, 5, "angles: prev: %f, Curr: %f", prevAngle, currAngle);
+    //pros::screen::print(TEXT_MEDIUM, 5, "angles: prev: %f, Curr: %f", prevAngle, currAngle);
 
     //updating offset
     if (deltaAngle < 0.00001) {
@@ -210,12 +210,12 @@ void odometry() {
         offsetY = 0.0;
     }
 
-    pros::screen::print(TEXT_MEDIUM, 7, "Offset: X: %f, Y: %f", (offsetX), (offsetY));
+    //pros::screen::print(TEXT_MEDIUM, 7, "Offset: X: %f, Y: %f", (offsetX), (offsetY));
 
     averageAngle = prevAngle + (deltaAngle / 2.0);
 
     prevAngle = currAngle;
-    pros::screen::print(TEXT_MEDIUM, 8, "current angktghjtrt: X: %f", currAngle);
+    //pros::screen::print(TEXT_MEDIUM, 8, "current angktghjtrt: X: %f", currAngle);
     
     absoluteX = offsetX * cos(averageAngle) + offsetY * sin(averageAngle);
     absoluteY = offsetY * cos(averageAngle) + offsetX * sin(averageAngle);
@@ -230,6 +230,72 @@ void odometry() {
 
 
     pros::delay(5);
+  }
+}
+
+double findAng(int x, int y) {
+  double dX = abs(x - currX);
+  double dY = abs(y - currY);
+  double desAng = 0;
+
+  if (dX != 0 && dY != 0) {
+    desAng = atan(dY / dX);
+    if (y > currY && x > currX) {
+      desAng = (2 * pi) - desAng;
+    } else if (y < currY && x > currX) {
+      desAng = desAng;
+    } else if (y > currY && x < currX) {
+      desAng = pi + desAng;
+    } else {
+      desAng = pi - desAng;
+    }
+  } else {
+    if (dX == 0) {
+      if (y > currY) {
+        desAng = (3/2) * pi;
+      } else {
+        desAng = (1/2) * pi;
+      }
+    } else {
+      if (x > currX) {
+        desAng = 0;
+      } else {
+        desAng = pi;
+      }
+    }
+  }
+  return desAng;
+}
+
+void moveToPoint(int x, int y) {
+  double distance = abs(sqrt(pow(x - currX, 2) + pow(y - currY, 2)));
+  double turnSpeed = 5;
+  double speed = 20;
+  while (distance > 5) {
+    //pros::screen::print(TEXT_MEDIUM, 3, "Dist: %d", distance);
+    double desAng = findAng(x, y);
+    double dAng = desAng - currAngle;
+
+    if (dAng > pi) {
+      dAng -= pi;
+      dAng *= -1;
+    } else if (dAng < -1 * pi) {
+      dAng += pi;
+      dAng *= -1;
+    }
+
+    //pros::screen::print(TEXT_MEDIUM, 3, "DesAng: %d", desAng);
+
+    double leftPower = (speed * (distance / 50)) + (turnSpeed * (dAng / abs(dAng)));
+    double rightPower = (speed * (distance / 50)) - (turnSpeed * (dAng / abs(dAng)));
+
+    left1.move(leftPower);
+    left2.move(leftPower);
+    right1.move(rightPower);
+    right2.move(rightPower);
+
+    pros::delay(5);
+    distance = abs(sqrt(pow(x - currX, 2) + pow(y - currY, 2)));
   }
 }
 
@@ -337,6 +403,8 @@ void opcontrol() {
   pros::screen::erase();
 
   pros::Task odom(odometry);
+
+  //moveToPoint(-30, 30);
 
   while (true) {
     int leftPower = controller.get_analog(ANALOG_LEFT_Y) + controller.get_analog(ANALOG_RIGHT_X);
