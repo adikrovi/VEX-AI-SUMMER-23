@@ -161,9 +161,7 @@ void odometry() {
   double absoluteY;
 
   while (true) {
-    pros::screen::erase();
-    pros::screen::print(TEXT_MEDIUM, 1, "X: %d Y: %d", (int) currX, (int) currY);
-    pros::screen::print(TEXT_MEDIUM, 2, "Ang: %d", currAngle);
+    
 
     currLeft = toRadians(leftRot.get_position() / 100.0);
     currRight = toRadians(-rightRot.get_position() / 100.0);
@@ -269,12 +267,18 @@ double findAng(int x, int y) {
 
 void moveToPoint(int x, int y) {
   double distance = abs(sqrt(pow(x - currX, 2) + pow(y - currY, 2)));
-  double turnSpeed = 5;
-  double speed = 20;
+  double turnSpeed = 10;
+  double speed = 50;
+  double desAng = 0;
+  double dAng = 0;
   while (distance > 5) {
-    //pros::screen::print(TEXT_MEDIUM, 3, "Dist: %d", distance);
-    double desAng = findAng(x, y);
-    double dAng = desAng - currAngle;
+    pros::screen::erase();
+    pros::screen::print(TEXT_MEDIUM, 1, "X: %d Y: %d", (int) currX, (int) currY);
+    pros::screen::print(TEXT_MEDIUM, 2, "Ang: %d", (int) currAngle);
+    pros::screen::print(TEXT_MEDIUM, 3, "Dist: %d", (int) distance);
+    pros::screen::print(TEXT_MEDIUM, 4, "DesAng: %d, dAng: %d", (int) desAng, (int) dAng);
+    desAng = findAng(x, y);
+    dAng = desAng - currAngle;
 
     if (dAng > pi) {
       dAng -= pi;
@@ -404,7 +408,7 @@ void opcontrol() {
 
   pros::Task odom(odometry);
 
-  //moveToPoint(-30, 30);
+  moveToPoint(0, 20);
 
   while (true) {
     int leftPower = controller.get_analog(ANALOG_LEFT_Y) + controller.get_analog(ANALOG_RIGHT_X);
