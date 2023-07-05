@@ -134,9 +134,9 @@ void odometry() {
   double wheelDiameter = 2.75;
 
 // distance
-  double prevLeft = 0;
-  double prevRight = 0;
-  double prevBack = 0;
+  double prevLeft = 0.0;
+  double prevRight = 0.0;
+  double prevBack = 0.0;
 // current distance
   double currLeft;
   double currRight;
@@ -148,7 +148,7 @@ void odometry() {
 
 //angle of circle
   double currAngle;
-  double prevAngle = 0;
+  double prevAngle = 0.0;
   double deltaAngle;
   double averageAngle;
 
@@ -165,16 +165,16 @@ void odometry() {
 
     currLeft = toRadians(leftRot.get_position() / 100.0);
     currRight = toRadians(-rightRot.get_position() / 100.0);
-    currBack = toRadians(backRot.get_position() / 100.0);
+    currBack = (toRadians(backRot.get_position() / 100.0));
 
-    pros::screen::print(TEXT_MEDIUM, 3, "Orig: L: %d, R: %d, B: %d", (int) currLeft, (int) currRight, (int) currBack);
+    pros::screen::print(TEXT_MEDIUM, 3, "Orig: L: %f, R: %f, B: %f", currLeft, currRight, currBack);
 
-    // figuring out the distance the wheel has moved
-    deltaLeft = ((currLeft - prevLeft)) * (wheelDiameter / 2);
-    deltaRight = ((currRight - prevRight)) * (wheelDiameter / 2);
-    deltaBack = ((currBack - prevBack)) * (wheelDiameter / 2);
+    // figuring out the distance the robot has moved (in)
+    deltaLeft = ((currLeft - prevLeft)) * (wheelDiameter / 2.0);
+    deltaRight = ((currRight - prevRight)) * (wheelDiameter / 2.0);
+    deltaBack = ((currBack - prevBack)) * (wheelDiameter / 2.0);
 
-    pros::screen::print(TEXT_MEDIUM, 4, "Delta: L: %d, R: %d, B: %d", (int) deltaLeft, (int) deltaRight, (int) deltaBack);
+    pros::screen::print(TEXT_MEDIUM, 4, "Delta: L: %f, R: %f, B: %f", deltaLeft, deltaRight, deltaBack);
    
     // making current distances
     prevLeft = currLeft;
@@ -182,26 +182,35 @@ void odometry() {
     prevBack = currBack;
 
     //Figuring out angle
-    currAngle = (prevAngle + ((deltaLeft - deltaRight) / (leftDist + rightDist))); // error here as well
+    currAngle = (prevAngle + ((deltaRight - deltaLeft) / (leftDist + rightDist))); // error here as well
     deltaAngle = (currAngle - prevAngle);
-    pros::screen::print(TEXT_MEDIUM, 5, "angles: prev: %d, Curr: %d, Delta: %d", (int) prevAngle, (int) currAngle, (int) deltaAngle);
-    if (currAngle == prevAngle) {
+    pros::screen::print(TEXT_MEDIUM, 5, "angles: prev: %f, Curr: %f, Delta: %f", prevAngle, currAngle);
+    pros::screen::print(TEXT_MEDIUM, 6, "Delta: %f",  deltaAngle);
+
+    //updating offset
+    if (deltaAngle < 0.00001) {
       offsetX = deltaBack;
       offsetY = deltaRight;}
+      else if (deltaAngle > -0.00001) {
+      offsetX = deltaBack;
+      offsetY = deltaRight;}
+      else if  (deltaAngle > 0.0001 or deltaAngle < -0.0001) {
+      offsetX = (2.0 * (sin(currAngle / 2.0))) * ((deltaBack / deltaAngle) + backDist); // this 
+      offsetY = (2.0 * (sin(currAngle / 2.0))) * ((deltaRight / deltaAngle) + rightDist);} // and this}
       else {
-      offsetX = (2 * double (sin(currAngle / 2))) * ((deltaBack / deltaAngle) + backDist); // this 
-      offsetY = (2 * double (sin(currAngle / 2))) * ((deltaRight / deltaAngle) + rightDist); // and this
-    }
+        offsetX = 0.0;
+        offsetY = 0.0;
+      }
 
-    pros::screen::print(TEXT_MEDIUM, 6, "Offset: X: %d, Y: %d", int (offsetX), int (offsetY));
+    pros::screen::print(TEXT_MEDIUM, 7, "Offset: X: %f, Y: %f", (offsetX), (offsetY));
 
-    averageAngle = prevAngle + (deltaAngle / 2);
+    averageAngle = prevAngle + (deltaAngle / 2.0);
 
     prevAngle = currAngle;
-    pros::screen::print(TEXT_MEDIUM, 7, "current angktghjtrt: X: %d", (int) currAngle);
+    pros::screen::print(TEXT_MEDIUM, 8, "current angktghjtrt: X: %f", currAngle);
     
-    absoluteX = offsetX * double (cos(averageAngle));
-    absoluteY = offsetY * double (cos(averageAngle));
+    absoluteX = offsetX *  sin(averageAngle);
+    absoluteY = offsetY *  cos(averageAngle);
     
     
     prevX = currX;
@@ -210,8 +219,6 @@ void odometry() {
     currX += absoluteX;
     currY += absoluteY;
 
-    double yourmom = sin(pi / 2);
-    pros::screen::print(TEXT_MEDIUM, 8, "sine: %d", (int) yourmom);
 
     pros::delay(10);
   }
