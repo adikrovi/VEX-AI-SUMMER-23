@@ -267,10 +267,12 @@ double findAng(int x, int y) {
 
 void moveToPoint(int x, int y) {
   double distance = abs(sqrt(pow(x - currX, 2) + pow(y - currY, 2)));
-  double turnSpeed = 10;
+  double initDist = distance;
+  double turnSpeed = 30;
   double speed = 50;
-  double desAng = 0;
-  double dAng = 0;
+  double desAng = findAng(x, y);
+  double dAng = desAng - currAngle;
+  double initdAng = dAng;
   while (distance > 5) {
     pros::screen::erase();
     pros::screen::print(TEXT_MEDIUM, 1, "X: %d Y: %d", (int) currX, (int) currY);
@@ -288,10 +290,8 @@ void moveToPoint(int x, int y) {
       dAng *= -1;
     }
 
-    //pros::screen::print(TEXT_MEDIUM, 3, "DesAng: %d", desAng);
-
-    double leftPower = (speed * (distance / 50)) + (turnSpeed * (dAng / abs(dAng)));
-    double rightPower = (speed * (distance / 50)) - (turnSpeed * (dAng / abs(dAng)));
+    double leftPower = (speed * (distance / initDist)) + (turnSpeed * (dAng / initdAng));
+    double rightPower = (speed * (distance / initDist)) - (turnSpeed * (dAng / initdAng));
 
     left1.move(leftPower);
     left2.move(leftPower);
