@@ -182,25 +182,30 @@ void odometry() {
     prevBack = currBack;
 
     //Figuring out angle
-    currAngle = (prevAngle + ((deltaRight - deltaLeft) / (leftDist + rightDist))); // error here as well
+    currAngle = (prevAngle + ((deltaRight - deltaLeft) / (leftDist + rightDist)));
     deltaAngle = (currAngle - prevAngle);
+    if (currAngle > (2.0 * pi)) {
+      currAngle = currAngle - (2.0 * pi);
+    } else if (currAngle < (-2.0 * pi)) {
+      currAngle = currAngle + (2.0 * pi);
+    }
     pros::screen::print(TEXT_MEDIUM, 5, "angles: prev: %f, Curr: %f, Delta: %f", prevAngle, currAngle);
     pros::screen::print(TEXT_MEDIUM, 6, "Delta: %f",  deltaAngle);
 
     //updating offset
     if (deltaAngle < 0.00001) {
       offsetX = deltaBack;
-      offsetY = deltaRight;}
-      else if (deltaAngle > -0.00001) {
+      offsetY = deltaRight;
+    } else if (deltaAngle > -0.00001) {
       offsetX = deltaBack;
-      offsetY = deltaRight;}
-      else if  (deltaAngle > 0.0001 or deltaAngle < -0.0001) {
+      offsetY = deltaRight;
+    } else if  (deltaAngle > 0.00001 or deltaAngle < -0.00001) {
       offsetX = (2.0 * (sin(currAngle / 2.0))) * ((deltaBack / deltaAngle) + backDist); // this 
-      offsetY = (2.0 * (sin(currAngle / 2.0))) * ((deltaRight / deltaAngle) + rightDist);} // and this}
-      else {
+      offsetY = (2.0 * (sin(currAngle / 2.0))) * ((deltaRight / deltaAngle) + rightDist);
+    } else {
         offsetX = 0.0;
         offsetY = 0.0;
-      }
+    }
 
     pros::screen::print(TEXT_MEDIUM, 7, "Offset: X: %f, Y: %f", (offsetX), (offsetY));
 
@@ -209,8 +214,8 @@ void odometry() {
     prevAngle = currAngle;
     pros::screen::print(TEXT_MEDIUM, 8, "current angktghjtrt: X: %f", currAngle);
     
-    absoluteX = offsetX *  sin(averageAngle);
-    absoluteY = offsetY *  cos(averageAngle);
+    absoluteX = offsetX * cos(averageAngle) + offsetY * sin(averageAngle);
+    absoluteY = offsetY * cos(averageAngle) + offsetX * sin(averageAngle);
     
     
     prevX = currX;
@@ -218,6 +223,7 @@ void odometry() {
 
     currX += absoluteX;
     currY += absoluteY;
+  
 
 
     pros::delay(10);
