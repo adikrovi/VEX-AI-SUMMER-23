@@ -1,6 +1,7 @@
 #include "main.h"
 #include "EZ-Template/util.hpp"
 #include "pros/adi.hpp"
+#include "pros/imu.hpp"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
 #include "pros/motors.h"
@@ -72,6 +73,7 @@ pros::Rotation leftRot(8);
 pros::Rotation rightRot(9);
 pros::Rotation backRot(10);
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
+pros::Imu imu(7);
 
 double currX = 0;
 double currY = 0;
@@ -182,15 +184,16 @@ void odometry() {
     prevBack = currBack;
 
     //Figuring out angle
-    currAngle = (prevAngle + ((deltaRight - deltaLeft) / (leftDist + rightDist)));
+    // currAngle = (prevAngle + ((deltaRight - deltaLeft) / (leftDist + rightDist)));
+    // deltaAngle = (currAngle - prevAngle);
+    // if (currAngle > (2.0 * pi)) {
+    //   currAngle = currAngle - (2.0 * pi);
+    // } else if (currAngle < (-2.0 * pi)) {
+    //   currAngle = currAngle + (2.0 * pi);
+    // }
+    currAngle = toRadians(imu.get_heading());
     deltaAngle = (currAngle - prevAngle);
-    if (currAngle > (2.0 * pi)) {
-      currAngle = currAngle - (2.0 * pi);
-    } else if (currAngle < (-2.0 * pi)) {
-      currAngle = currAngle + (2.0 * pi);
-    }
-    pros::screen::print(TEXT_MEDIUM, 5, "angles: prev: %f, Curr: %f, Delta: %f", prevAngle, currAngle);
-    pros::screen::print(TEXT_MEDIUM, 6, "Delta: %f",  deltaAngle);
+    pros::screen::print(TEXT_MEDIUM, 5, "angles: prev: %f, Curr: %f", prevAngle, currAngle);
 
     //updating offset
     if (deltaAngle < 0.00001) {
@@ -226,7 +229,7 @@ void odometry() {
   
 
 
-    pros::delay(10);
+    pros::delay(5);
   }
 }
 
