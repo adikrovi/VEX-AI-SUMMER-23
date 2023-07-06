@@ -84,6 +84,8 @@ double prevY = 0;
 
 double pi = 3.14159265358979323846;
 
+bool odomBool = true;
+
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -161,7 +163,13 @@ void odometry() {
   double absoluteY;
 
   while (true) {
-    
+    pros::screen::erase();
+
+    if (odomBool) {
+      //pros::screen::erase();
+      //pros::screen::print(TEXT_MEDIUM, 1, "X: %d Y: %d", (int) currX, (int) currY);
+      //pros::screen::print(TEXT_MEDIUM, 2, "Ang: %d", (int) currAngle);
+    }
 
     currLeft = toRadians(leftRot.get_position() / 100.0);
     currRight = toRadians(-rightRot.get_position() / 100.0);
@@ -237,28 +245,28 @@ double findAng(int x, int y) {
   double desAng = 0;
 
   if (dX != 0 && dY != 0) {
-    desAng = atan(dY / dX);
+    desAng = tan(dY / dX);
     if (y > currY && x > currX) {
-      desAng = (2 * pi) - desAng;
-    } else if (y < currY && x > currX) {
       desAng = desAng;
+    } else if (y < currY && x > currX) {
+      desAng = desAng + (pi / 2);
     } else if (y > currY && x < currX) {
-      desAng = pi + desAng;
+      desAng = (2 * pi) - desAng;
     } else {
-      desAng = pi - desAng;
+      desAng = pi + desAng;
     }
   } else {
     if (dX == 0) {
       if (y > currY) {
-        desAng = (3/2) * pi;
-      } else {
-        desAng = (1/2) * pi;
-      }
-    } else {
-      if (x > currX) {
         desAng = 0;
       } else {
         desAng = pi;
+      }
+    } else {
+      if (x > currX) {
+        desAng = pi / 2;
+      } else {
+        desAng = 3 * pi / 2;
       }
     }
   }
@@ -268,12 +276,13 @@ double findAng(int x, int y) {
 void moveToPoint(int x, int y) {
   double distance = abs(sqrt(pow(x - currX, 2) + pow(y - currY, 2)));
   double initDist = distance;
-  double turnSpeed = 30;
-  double speed = 50;
   double desAng = findAng(x, y);
   double dAng = desAng - currAngle;
   double initdAng = dAng;
-  while (distance > 5) {
+  odomBool = false;
+  while (distance > 1) {
+    double turnSpeed = 10;
+    double speed = 50;
     pros::screen::erase();
     pros::screen::print(TEXT_MEDIUM, 1, "X: %d Y: %d", (int) currX, (int) currY);
     pros::screen::print(TEXT_MEDIUM, 2, "Ang: %d", (int) currAngle);
@@ -282,12 +291,8 @@ void moveToPoint(int x, int y) {
     desAng = findAng(x, y);
     dAng = desAng - currAngle;
 
-    if (dAng > pi) {
-      dAng -= pi;
-      dAng *= -1;
-    } else if (dAng < -1 * pi) {
-      dAng += pi;
-      dAng *= -1;
+    if (desAng > pi) {
+      turnSpeed *= -1;
     }
 
     double leftPower = (speed * (distance / initDist)) + (turnSpeed * (dAng / initdAng));
@@ -301,6 +306,7 @@ void moveToPoint(int x, int y) {
     pros::delay(5);
     distance = abs(sqrt(pow(x - currX, 2) + pow(y - currY, 2)));
   }
+  odomBool = true;
 }
 
 /**
@@ -341,12 +347,21 @@ void competition_initialize() {
  * from where it left off.
  */
 void autonomous() {
-  chassis.reset_pid_targets(); // Resets PID targets to 0
-  chassis.reset_gyro(); // Reset gyro position to 0
-  chassis.reset_drive_sensor(); // Reset drive sensors to 0
-  chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // Set motors to hold.  This helps autonomous consistency.
+  // chassis.reset_pid_targets(); // Resets PID targets to 0
+  // chassis.reset_gyro(); // Reset gyro position to 0
+  // chassis.reset_drive_sensor(); // Reset drive sensors to 0
+  // chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // Set motors to hold.  This helps autonomous consistency.
 
-  ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
+  // ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
+
+  leftRot.set_position(0);
+  rightRot.set_position(0);
+  backRot.set_position(0);
+  pros::screen::erase();
+
+  pros::Task odom(odometry);
+
+  moveToPoint(-24, 24);
 }
 
 
@@ -407,8 +422,6 @@ void opcontrol() {
   pros::screen::erase();
 
   pros::Task odom(odometry);
-
-  moveToPoint(0, 20);
 
   while (true) {
     int leftPower = controller.get_analog(ANALOG_LEFT_Y) + controller.get_analog(ANALOG_RIGHT_X);
