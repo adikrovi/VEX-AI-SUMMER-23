@@ -170,6 +170,9 @@ void odometry() {
       //pros::screen::print(TEXT_MEDIUM, 1, "X: %d Y: %d", (int) currX, (int) currY);
       //pros::screen::print(TEXT_MEDIUM, 2, "Ang: %d", (int) currAngle);
     }
+    //pros::screen::erase();
+    //pros::screen::print(TEXT_MEDIUM, 1, "X: %d Y: %d", (int) currX, (int) currY);
+    //pros::screen::print(TEXT_MEDIUM, 2, "Ang: %d", (int) currAngle);
 
     currLeft = toRadians(leftRot.get_position() / 100.0);
     currRight = toRadians(-rightRot.get_position() / 100.0);
@@ -197,14 +200,20 @@ void odometry() {
     // } else if (currAngle < (-2.0 * pi)) {
     //   currAngle = currAngle + (2.0 * pi);
     // }
-    currAngle = toRadians(imu.get_heading() + (pi / 2.0));
+    double currAngle1 = toRadians(imu.get_heading() + (pi / 2));
+
+    if (currAngle > pi) {
+        currAngle1 -= (2 * pi);
+    }
+
+    currAngle = -currAngle1;
     // if (currAngle < (2.0 * pi)) {
     //   currAngle -= (2.0 * pi);
     // } else if ( currAngle > 0) {
     //   currAngle += (2.0 * pi);
     // }
     deltaAngle = (currAngle - prevAngle);
-    pros::screen::print(TEXT_MEDIUM, 9, "angles: prev: %f, Curr: %f", prevAngle, currAngle);
+    //pros::screen::print(TEXT_MEDIUM, 9, "angles: prev: %f, Curr: %f", prevAngle, currAngle);
 
     //updating offset
     if (deltaAngle < 0.0001) {
@@ -250,33 +259,7 @@ double findAng(int x, int y) {
   double dY = (y - currY);
   double desAng = 0.0;
 
-  if (dX != 0.0 && dY != 0.0) {
-    desAng = atan2(dY, dX); 
-    
-    // if (y > currY && x > currX) {
-    //   desAng = desAng;
-    // } else if (y < currY && x > currX) {
-    //   desAng = desAng - (pi / 2.0);
-    // } else if (y > currY && x < currX) {
-    //   desAng = (pi / 2.0) + desAng;
-    // } else {
-    //   desAng = pi + desAng;
-    // }
-  } else {
-    if (dX == 0.0) {
-      if (y > currY) {
-        desAng = 0.0;
-      } else {
-        desAng = pi;
-      }
-    } else {
-      if (x > currX) {
-        desAng = 3.0 * pi / 2.0;
-      } else {
-        desAng = pi / 2.0;
-      }
-    }
-  }
+  desAng = (atan2(dY, dX) / 2.0);
   return desAng;
 }
 
@@ -284,7 +267,7 @@ double findAng(int x, int y) {
 void moveToPoint(int x, int y) {
   double distance = abs(sqrt(pow((x - currX), 2.0) + pow((y - currY), 2.0)));
   double turnPidIntegral = 0.0;
-  double integralLimit = 5.5;
+  double integralLimit = 4.0;
   double turnPidDerivative = 0.0;
   double turnPidLastError = 0.0;
   double turnPidDrive = 0.0;
@@ -293,13 +276,19 @@ void moveToPoint(int x, int y) {
   double latPidLastError = 0.0;
   double latPidDrive = 0.0;
 
-  double turnKi = 0.0;
+  double turnKp = 15.0;
+  double turnKi = 0.7;
+  double turnKd = 1.0;
+
+  double latKi = 0.0;
+  double latKp = 0.0;
+  double latKd = 0.0;
   
   odomBool = false;
   while (distance > 1.0) {
     // double turnSpeed = 10.0;
     // double speed = 30.0;
-     distance = abs(sqrt(pow((x - currX), 2.0) + pow((y - currY), 2.0)));
+    distance = abs(sqrt(pow((x - currX), 2.0) + pow((y - currY), 2.0)));
     double desAng = findAng(x, y);
     double dAng = desAng - currAngle;
     pros::screen::erase();
@@ -310,16 +299,47 @@ void moveToPoint(int x, int y) {
     // desAng = findAng(x, y);
     // dAng = desAng - currAngle;
 
-      if (abs(dAng) > .005){
+      if (abs(dAng) > .0005){
         if (turnKi != 0) {
-          if (abs(dAng) < integralLimit){
-            turnPidIntegral = turnPidIntegral + dAng;
-          } else {
-            turnPidIntegral = 0.0;
+            if (abs(dAng) < integralLimit){
+              turnPidIntegral = turnPidIntegral + dAng;
+            } else {
+             turnPidIntegral = 0.0;
+             }
+        }
+        turnPidDerivative = dAng - turnPidLastError;
+        turnPidLastError = dAng;
+        turnPidDrive = (turnKp * dAng) + (turnKi * turnPidIntegral) + (turnKd * turnPidDerivative);
+        
+       } else {
+        turnPidIntegral = 0.0;
+        turnPidLastError = 0.0;
+        turnPidDerivative = 0.0;
+        turnPidDrive = 0.0;
+       }
+
+      if (distance > 0.1) {
+
+          if (latKi !=0) {
+              if (abs(distance) < integralLimit) {
+                latPidIntegral = latPidIntegral + distance;
+              } else {
+                latPidIntegral = 0.0;
+              }
+          
           }
-      }}
-      double leftPower = 0;
-      double rightPower = 0;
+          latPidDerivative = distance - latPidLastError;
+          latPidLastError = distance;
+          latPidDrive = (latKp * distance) + (latKi * latPidIntegral) + (latKd * latPidDerivative);
+      } else {
+        latPidIntegral = 0.0;
+        latPidLastError = 0.0;
+        latPidDerivative = 0.0;
+        latPidDrive = 0.0;
+      }
+
+      double leftPower = -turnPidDrive + latPidDrive;
+      double rightPower = turnPidDrive + latPidDrive;
       left1.move(leftPower);
       left2.move(leftPower);
       right1.move(rightPower);
@@ -327,7 +347,7 @@ void moveToPoint(int x, int y) {
     // }
     
 
-    pros::delay(5);
+    pros::delay(10);
     distance = abs(sqrt(pow(x - currX, 2) + pow(y - currY, 2)));
   }
   odomBool = true;
@@ -397,7 +417,7 @@ void autonomous() {
 
   pros::Task odom(odometry);
 
-  moveToPoint(30, 30);
+  moveToPoint(-5, -5);
 }
 
 
@@ -460,6 +480,7 @@ void opcontrol() {
   pros::Task odom(odometry);
 
   while (true) {
+    
     int leftPower = controller.get_analog(ANALOG_LEFT_Y) + controller.get_analog(ANALOG_RIGHT_X);
     int rightPower = controller.get_analog(ANALOG_LEFT_Y) - controller.get_analog(ANALOG_RIGHT_X);
 
