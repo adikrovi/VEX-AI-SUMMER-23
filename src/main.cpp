@@ -267,7 +267,7 @@ double findAng(int x, int y) {
 void moveToPoint(int x, int y) {
   double distance = abs(sqrt(pow((x - currX), 2.0) + pow((y - currY), 2.0)));
   double turnPidIntegral = 0.0;
-  double integralLimit = 4.0;
+  double integralLimit = 2.0;
   double turnPidDerivative = 0.0;
   double turnPidLastError = 0.0;
   double turnPidDrive = 0.0;
@@ -276,8 +276,8 @@ void moveToPoint(int x, int y) {
   double latPidLastError = 0.0;
   double latPidDrive = 0.0;
 
-  double turnKp = 15.0;
-  double turnKi = 0.7;
+  double turnKp = 7.0;
+  double turnKi = 0.1;
   double turnKd = 1.0;
 
   double latKi = 0.0;
