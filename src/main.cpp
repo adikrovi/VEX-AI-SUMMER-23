@@ -197,18 +197,23 @@ void odometry() {
     // } else if (currAngle < (-2.0 * pi)) {
     //   currAngle = currAngle + (2.0 * pi);
     // }
-    currAngle = toRadians(imu.get_heading());
+    currAngle = toRadians(imu.get_heading() + (pi / 2.0));
+    // if (currAngle < (2.0 * pi)) {
+    //   currAngle -= (2.0 * pi);
+    // } else if ( currAngle > 0) {
+    //   currAngle += (2.0 * pi);
+    // }
     deltaAngle = (currAngle - prevAngle);
-    //pros::screen::print(TEXT_MEDIUM, 5, "angles: prev: %f, Curr: %f", prevAngle, currAngle);
+    pros::screen::print(TEXT_MEDIUM, 9, "angles: prev: %f, Curr: %f", prevAngle, currAngle);
 
     //updating offset
-    if (deltaAngle < 0.00001) {
+    if (deltaAngle < 0.0001) {
       offsetX = deltaBack;
       offsetY = deltaRight;
-    } else if (deltaAngle > -0.00001) {
+    } else if (deltaAngle > -0.0001) {
       offsetX = deltaBack;
       offsetY = deltaRight;
-    } else if  (deltaAngle > 0.00001 or deltaAngle < -0.00001) {
+    } else if  (deltaAngle > 0.0001 or deltaAngle < -0.0001) {
       offsetX = (2.0 * (sin(currAngle / 2.0))) * ((deltaBack / deltaAngle) + backDist); // this 
       offsetY = (2.0 * (sin(currAngle / 2.0))) * ((deltaRight / deltaAngle) + rightDist);
     } else {
@@ -239,69 +244,88 @@ void odometry() {
   }
 }
 
+// Figuring out the angle it needs to go to get to location
 double findAng(int x, int y) {
-  double dX = abs(x - currX);
-  double dY = abs(y - currY);
-  double desAng = 0;
+  double dX = (x - currX);
+  double dY = (y - currY);
+  double desAng = 0.0;
 
-  if (dX != 0 && dY != 0) {
-    desAng = tan(dY / dX);
-    if (y > currY && x > currX) {
-      desAng = desAng;
-    } else if (y < currY && x > currX) {
-      desAng = desAng + (pi / 2);
-    } else if (y > currY && x < currX) {
-      desAng = (2 * pi) - desAng;
-    } else {
-      desAng = pi + desAng;
-    }
+  if (dX != 0.0 && dY != 0.0) {
+    desAng = atan2(dY, dX); 
+    
+    // if (y > currY && x > currX) {
+    //   desAng = desAng;
+    // } else if (y < currY && x > currX) {
+    //   desAng = desAng - (pi / 2.0);
+    // } else if (y > currY && x < currX) {
+    //   desAng = (pi / 2.0) + desAng;
+    // } else {
+    //   desAng = pi + desAng;
+    // }
   } else {
-    if (dX == 0) {
+    if (dX == 0.0) {
       if (y > currY) {
-        desAng = 0;
+        desAng = 0.0;
       } else {
         desAng = pi;
       }
     } else {
       if (x > currX) {
-        desAng = pi / 2;
+        desAng = 3.0 * pi / 2.0;
       } else {
-        desAng = 3 * pi / 2;
+        desAng = pi / 2.0;
       }
     }
   }
   return desAng;
 }
 
+// figurining out how long the motors have to run to get to desired location
 void moveToPoint(int x, int y) {
-  double distance = abs(sqrt(pow(x - currX, 2) + pow(y - currY, 2)));
-  double initDist = distance;
-  double desAng = findAng(x, y);
-  double dAng = desAng - currAngle;
-  double initdAng = dAng;
+  double distance = abs(sqrt(pow((x - currX), 2.0) + pow((y - currY), 2.0)));
+  double turnPidIntegral = 0.0;
+  double integralLimit = 5.5;
+  double turnPidDerivative = 0.0;
+  double turnPidLastError = 0.0;
+  double turnPidDrive = 0.0;
+  double latPidIntegral = 0.0;
+  double latPidDerivative = 0.0;
+  double latPidLastError = 0.0;
+  double latPidDrive = 0.0;
+
+  double turnKi = 0.0;
+  
   odomBool = false;
-  while (distance > 1) {
-    double turnSpeed = 10;
-    double speed = 50;
+  while (distance > 1.0) {
+    // double turnSpeed = 10.0;
+    // double speed = 30.0;
+     distance = abs(sqrt(pow((x - currX), 2.0) + pow((y - currY), 2.0)));
+    double desAng = findAng(x, y);
+    double dAng = desAng - currAngle;
     pros::screen::erase();
     pros::screen::print(TEXT_MEDIUM, 1, "X: %d Y: %d", (int) currX, (int) currY);
     pros::screen::print(TEXT_MEDIUM, 2, "Ang: %d", (int) currAngle);
     pros::screen::print(TEXT_MEDIUM, 3, "Dist: %d", (int) distance);
     pros::screen::print(TEXT_MEDIUM, 4, "DesAng: %d, dAng: %d", (int) desAng, (int) dAng);
-    desAng = findAng(x, y);
-    dAng = desAng - currAngle;
+    // desAng = findAng(x, y);
+    // dAng = desAng - currAngle;
 
-    if (desAng > pi) {
-      turnSpeed *= -1;
-    }
-
-    double leftPower = (speed * (distance / initDist)) + (turnSpeed * (dAng / initdAng));
-    double rightPower = (speed * (distance / initDist)) - (turnSpeed * (dAng / initdAng));
-
-    left1.move(leftPower);
-    left2.move(leftPower);
-    right1.move(rightPower);
-    right2.move(rightPower);
+      if (abs(dAng) > .005){
+        if (turnKi != 0) {
+          if (abs(dAng) < integralLimit){
+            turnPidIntegral = turnPidIntegral + dAng;
+          } else {
+            turnPidIntegral = 0.0;
+          }
+      }}
+      double leftPower = 0;
+      double rightPower = 0;
+      left1.move(leftPower);
+      left2.move(leftPower);
+      right1.move(rightPower);
+      right2.move(rightPower);
+    // }
+    
 
     pros::delay(5);
     distance = abs(sqrt(pow(x - currX, 2) + pow(y - currY, 2)));
@@ -325,7 +349,19 @@ void disabled() {
  * Management System or the VEX Competition Switch. This is intended for
  * competition-specific initialization routines, such as an autonomous selector
  * on the LCD.
- *
+ *  // if (dAng > (pi / 2.0) && ((3.0 * pi) / 2) < dAng) {
+    //   turnSpeed = 30.0;
+    //   turnSpeed *= -1;
+    //   speed = 0.0;
+    // }
+    // if (dAng == 0) {
+    //   double leftPower = (speed * (distance / initDist)); 
+    //   double rightPower = (speed * (distance / initDist)); 
+    //   left1.move(leftPower);
+    //   left2.move(leftPower);
+    //   right1.move(rightPower);
+    //   right2.move(rightPower);
+    // } else {
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
@@ -361,7 +397,7 @@ void autonomous() {
 
   pros::Task odom(odometry);
 
-  moveToPoint(-24, 24);
+  moveToPoint(30, 30);
 }
 
 

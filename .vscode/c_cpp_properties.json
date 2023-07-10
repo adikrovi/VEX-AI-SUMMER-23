@@ -6,24 +6,25 @@
         "${workspaceFolder}/**",
         "/Users/adityakrovi/Documents/VEX/Github_Clones/VEX-AI-SUMMER-23/include",
         "/Users/adityakrovi/Documents/VEX/Github_Clones/VEXAISUMMER23/include",
-        "/Users/adityakrovi/Documents/VEX/GithubClones/VEXAISUMMER23/include"
+        "/Users/adityakrovi/Documents/VEX/GithubClones/VEXAISUMMER23/include",
+        "/Users/jacoblikins/Documents/vex-vscode-projects/VEX-AI-SUMMER-23/include"
       ],
       "defines": [
         "_DEBUG",
         "UNICODE",
         "_UNICODE"
       ],
-      "compilerPath": "/Users/adityakrovi/Library/Application Support/Code/User/globalStorage/sigbots.pros/install/pros-toolchain-macos/bin/arm-none-eabi-g++",
+      "compilerPath": "/Users/jacoblikins/Library/Application Support/Code/User/globalStorage/sigbots.pros/install/pros-toolchain-macos/bin/arm-none-eabi-g++",
       "cStandard": "c17",
       "cppStandard": "c++17",
       "intelliSenseMode": "gcc-arm",
-      "compileCommands": "/Users/adityakrovi/Documents/VEX/GithubClones/VEXAISUMMER23/compile_commands.json",
+      "compileCommands": "/Users/jacoblikins/Documents/vex-vscode-projects/VEX-AI-SUMMER-23/compile_commands.json",
       "macFrameworkPath": [
         "/System/Library/Frameworks"
       ],
       "browse": {
         "path": [
-          "/Users/adityakrovi/Documents/VEX/GithubClones/VEXAISUMMER23"
+          "/Users/jacoblikins/Documents/vex-vscode-projects/VEX-AI-SUMMER-23"
         ],
         "limitSymbolsToIncludedHeaders": true,
         "databaseFilename": ""
