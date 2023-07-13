@@ -130,6 +130,21 @@ double toRadians(double degrees) {
   return degrees * pi / 180;
 }
 
+double truncate(double number_val, int n)
+{
+    double factor = 1;
+    double previous = std::trunc(number_val); // remove integer portion
+    number_val -= previous;
+    for (int i = 0; i < n; i++) {
+        number_val *= 10;
+        factor *= 10;
+    }
+    number_val = std::trunc(number_val);
+    number_val /= factor;
+    number_val += previous; // add back integer portion
+    return number_val;
+}
+
 void odometry() {
   // distance from middle
   double leftDist = 1.40625;
@@ -163,7 +178,6 @@ void odometry() {
   double absoluteY;
 
   while (true) {
-    pros::screen::erase();
 
     if (odomBool) {
       //pros::screen::erase();
@@ -200,9 +214,9 @@ void odometry() {
     // } else if (currAngle < (-2.0 * pi)) {
     //   currAngle = currAngle + (2.0 * pi);
     // }
-    double currAngle1 = toRadians(imu.get_heading() + (pi / 2));
+    double currAngle1 = toRadians(imu.get_heading());
 
-    if (currAngle > pi) {
+    if (currAngle1 > pi) {
         currAngle1 -= (2 * pi);
     }
 
@@ -259,8 +273,8 @@ double findAng(int x, int y) {
   double dY = (y - currY);
   double desAng = 0.0;
 
-  desAng = (atan2(dY, dX) / 2.0);
-  return desAng;
+  desAng = (atan2(dX, dY));
+  return -desAng;
 }
 
 // figurining out how long the motors have to run to get to desired location
@@ -276,13 +290,13 @@ void moveToPoint(int x, int y) {
   double latPidLastError = 0.0;
   double latPidDrive = 0.0;
 
-  double turnKp = 7.0;
-  double turnKi = 0.1;
-  double turnKd = 1.0;
+  double turnKp = 50.0;
+  double turnKi = 1.8;
+  double turnKd = 30.0;
 
-  double latKi = 0.0;
-  double latKp = 0.0;
-  double latKd = 0.0;
+  double latKi = 25.0;
+  double latKp = 1.05;
+  double latKd = 0.4;
   
   odomBool = false;
   while (distance > 1.0) {
@@ -291,11 +305,17 @@ void moveToPoint(int x, int y) {
     distance = abs(sqrt(pow((x - currX), 2.0) + pow((y - currY), 2.0)));
     double desAng = findAng(x, y);
     double dAng = desAng - currAngle;
-    pros::screen::erase();
-    pros::screen::print(TEXT_MEDIUM, 1, "X: %d Y: %d", (int) currX, (int) currY);
-    pros::screen::print(TEXT_MEDIUM, 2, "Ang: %d", (int) currAngle);
-    pros::screen::print(TEXT_MEDIUM, 3, "Dist: %d", (int) distance);
-    pros::screen::print(TEXT_MEDIUM, 4, "DesAng: %d, dAng: %d", (int) desAng, (int) dAng);
+    // pros::screen::erase();
+    // pros::screen::print(TEXT_MEDIUM, 1, "X: %d Y: %d", (int) currX, (int) currY);
+    // pros::screen::print(TEXT_MEDIUM, 2, "Ang: %d", truncate(currAngle, 2));
+    // pros::screen::print(TEXT_MEDIUM, 3, "Dist: %d", (int) distance);
+    // pros::screen::print(TEXT_MEDIUM, 4, "DesAng: %3d, dAng: %3d", truncate(desAng, 2), truncate(dAng, 2));
+
+    pros::lcd::clear();
+    pros::lcd::print(0, "X: %3f Y: %3f", currX, currY);
+    pros::lcd::print(1, "Ang: %3f", currAngle);
+    pros::lcd::print(2, "Dist: %3f", distance);
+    pros::lcd::print(3, "DesAng: %3f, dAng: %3f", desAng, dAng);
     // desAng = findAng(x, y);
     // dAng = desAng - currAngle;
 
@@ -347,7 +367,7 @@ void moveToPoint(int x, int y) {
     // }
     
 
-    pros::delay(10);
+    pros::delay(20);
     distance = abs(sqrt(pow(x - currX, 2) + pow(y - currY, 2)));
   }
   odomBool = true;
@@ -413,11 +433,10 @@ void autonomous() {
   leftRot.set_position(0);
   rightRot.set_position(0);
   backRot.set_position(0);
-  pros::screen::erase();
 
   pros::Task odom(odometry);
 
-  moveToPoint(-5, -5);
+  moveToPoint(-7, 7);
 }
 
 
@@ -475,7 +494,7 @@ void opcontrol() {
   leftRot.set_position(0);
   rightRot.set_position(0);
   backRot.set_position(0);
-  pros::screen::erase();
+
 
   pros::Task odom(odometry);
 
@@ -499,6 +518,10 @@ void opcontrol() {
       intake = 0;
       
     }
+    pros::screen::erase();
+    pros::screen::print(TEXT_MEDIUM, 5, "X: %d Y: %d", (int) currX, (int) currY);
+    pros::screen::print(TEXT_MEDIUM, 6, "Ang: %d", (int) currAngle);
+
  
     pros::delay(100);
   }
