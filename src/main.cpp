@@ -281,7 +281,8 @@ double findAng(int x, int y) {
 void moveToPoint(int x, int y) {
   double distance = abs(sqrt(pow((x - currX), 2.0) + pow((y - currY), 2.0)));
   double turnPidIntegral = 0.0;
-  double integralLimit = 2.0;
+  double turnintegralLimit = 1.0;
+  double latintegralLimit = 10;
   double turnPidDerivative = 0.0;
   double turnPidLastError = 0.0;
   double turnPidDrive = 0.0;
@@ -290,13 +291,13 @@ void moveToPoint(int x, int y) {
   double latPidLastError = 0.0;
   double latPidDrive = 0.0;
 
-  double turnKp = 50.0;
-  double turnKi = 1.8;
-  double turnKd = 30.0;
+  double turnKp = 97.0;
+  double turnKi = 2.8;
+  double turnKd = 72.0;
 
-  double latKi = 25.0;
-  double latKp = 1.05;
-  double latKd = 0.4;
+  double latKp = 50.0;
+  double latKi = 1.0;
+  double latKd = 35;
   
   odomBool = false;
   while (distance > 1.0) {
@@ -321,7 +322,7 @@ void moveToPoint(int x, int y) {
 
       if (abs(dAng) > .0005){
         if (turnKi != 0) {
-            if (abs(dAng) < integralLimit){
+            if (abs(dAng) < turnintegralLimit){
               turnPidIntegral = turnPidIntegral + dAng;
             } else {
              turnPidIntegral = 0.0;
@@ -331,17 +332,17 @@ void moveToPoint(int x, int y) {
         turnPidLastError = dAng;
         turnPidDrive = (turnKp * dAng) + (turnKi * turnPidIntegral) + (turnKd * turnPidDerivative);
         
-       } else {
+      } else {
         turnPidIntegral = 0.0;
         turnPidLastError = 0.0;
         turnPidDerivative = 0.0;
         turnPidDrive = 0.0;
-       }
+      }
 
-      if (distance > 0.1) {
+      if (distance > 1) {
 
           if (latKi !=0) {
-              if (abs(distance) < integralLimit) {
+              if (abs(distance) < latintegralLimit) {
                 latPidIntegral = latPidIntegral + distance;
               } else {
                 latPidIntegral = 0.0;
@@ -357,6 +358,7 @@ void moveToPoint(int x, int y) {
         latPidDerivative = 0.0;
         latPidDrive = 0.0;
       }
+
 
       double leftPower = -turnPidDrive + latPidDrive;
       double rightPower = turnPidDrive + latPidDrive;
@@ -436,7 +438,7 @@ void autonomous() {
 
   pros::Task odom(odometry);
 
-  moveToPoint(-7, 7);
+  moveToPoint(-27, 27);
 }
 
 
@@ -511,7 +513,7 @@ void opcontrol() {
      
       intake = -120;
     }
-      else if (controller.get_digital(DIGITAL_R1)) {
+    else if (controller.get_digital(DIGITAL_R1)) {
       intake = 120;
     }
     else {

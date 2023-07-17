@@ -14,17 +14,17 @@
         "UNICODE",
         "_UNICODE"
       ],
-      "compilerPath": "/Users/jacoblikins/Library/Application Support/Code/User/globalStorage/sigbots.pros/install/pros-toolchain-macos/bin/arm-none-eabi-g++",
+      "compilerPath": "/Users/adityakrovi/Library/Application Support/Code/User/globalStorage/sigbots.pros/install/pros-toolchain-macos/bin/arm-none-eabi-g++",
       "cStandard": "c17",
       "cppStandard": "c++17",
       "intelliSenseMode": "gcc-arm",
-      "compileCommands": "/Users/jacoblikins/Documents/vex-vscode-projects/VEX-AI-SUMMER-23/compile_commands.json",
+      "compileCommands": "/Users/adityakrovi/Documents/VEX/GithubClones/VEXAISUMMER23/compile_commands.json",
       "macFrameworkPath": [
         "/System/Library/Frameworks"
       ],
       "browse": {
         "path": [
-          "/Users/jacoblikins/Documents/vex-vscode-projects/VEX-AI-SUMMER-23"
+          "/Users/adityakrovi/Documents/VEX/GithubClones/VEXAISUMMER23"
         ],
         "limitSymbolsToIncludedHeaders": true,
         "databaseFilename": ""
