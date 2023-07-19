@@ -279,25 +279,26 @@ double findAng(int x, int y) {
 
 // figurining out how long the motors have to run to get to desired location
 void moveToPoint(int x, int y) {
-  double distance = abs(sqrt(pow((x - currX), 2.0) + pow((y - currY), 2.0)));
-  double turnPidIntegral = 0.0;
-  double turnintegralLimit = 1.0;
-  double latintegralLimit = 10;
+  double distance = abs(sqrt(pow((x - currX), 2.0) + pow((y - currY), 2.0))); //distance formula
+  double turnPidIntegral = 0.0; //Actual integral value
+  double turnintegralLimit = 1.0; //Value to approach to start using turnPidIntegral 
+  double latintegralLimit = 10; 
   double turnPidDerivative = 0.0;
-  double turnPidLastError = 0.0;
+  double turnPidLastError = 0.0; //takes last delta angle and stores it (for lateral it takes distance)
   double turnPidDrive = 0.0;
   double latPidIntegral = 0.0;
   double latPidDerivative = 0.0;
   double latPidLastError = 0.0;
   double latPidDrive = 0.0;
 
+//value multipliers
   double turnKp = 97.0;
-  double turnKi = 2.8;
+  double turnKi = 2.8; 
   double turnKd = 72.0;
 
   double latKp = 50.0;
   double latKi = 1.0;
-  double latKd = 35;
+  double latKd = 35; 
   
   odomBool = false;
   while (distance > 1.0) {
